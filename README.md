@@ -1,501 +1,160 @@
-CREATE TABLE Users (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role ENUM('student', 'instructor', 'admin') DEFAULT 'student',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Online Courses</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <header>
+        <h1>Online Learning Platform</h1>
+    </header>
 
-CREATE TABLE Courses (
-    course_id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(150) NOT NULL,
-    description TEXT,
-    instructor_id INT NOT NULL,
-    price DECIMAL(10,2) DEFAULT 0.00,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (instructor_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
+    <main>
+        <section id="courses-section">
+            <h2>Available Courses</h2>
+            <ul id="courses-list"></ul>
+        </section>
 
-CREATE TABLE Enrollments (
-    enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    course_id INT NOT NULL,
-    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('active', 'completed', 'dropped') DEFAULT 'active',
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
+        <section id="course-details" class="hidden">
+            <button id="back-btn">← Back to Courses</button>
+            <h2 id="course-title"></h2>
+            <p id="course-description"></p>
+            <p><strong>Instructor:</strong> <span id="course-instructor"></span></p>
+            <p><strong>Price:</strong> $<span id="course-price"></span></p>
+        </section>
+    </main>
 
-CREATE TABLE Modules (
-    module_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title VARCHAR(150) NOT NULL,
-    content TEXT,
-    position INT NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
+    <script src="script.js"></script>
+</body>
+</html>
+// Sample data simulating courses from your database
+const courses = [
+    {
+        course_id: 1,
+        title: "Introduction to Python",
+        description: "Learn Python basics including syntax, data types, and control structures.",
+        instructor: "Dr. Emily Brown",
+        price: 49.99
+    },
+    {
+        course_id: 2,
+        title: "Web Development with HTML & CSS",
+        description: "Build responsive websites using HTML and CSS.",
+        instructor: "Dr. Emily Brown",
+        price: 39.99
+    }
+];
 
-CREATE TABLE Assignments (
-    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title VARCHAR(150) NOT NULL,
-    description TEXT,
-    due_date DATE,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
+const coursesList = document.getElementById('courses-list');
+const courseDetailsSection = document.getElementById('course-details');
+const coursesSection = document.getElementById('courses-section');
 
-CREATE TABLE Submissions (
-    submission_id INT AUTO_INCREMENT PRIMARY KEY,
-    assignment_id INT NOT NULL,
-    student_id INT NOT NULL,
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    grade DECIMAL(5,2),
-    feedback TEXT,
-    FOREIGN KEY (assignment_id) REFERENCES Assignments(assignment_id) ON DELETE CASCADE,
-    FOREIGN KEY (student_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
+const courseTitle = document.getElementById('course-title');
+const courseDescription = document.getElementById('course-description');
+const courseInstructor = document.getElementById('course-instructor');
+const coursePrice = document.getElementById('course-price');
+const backBtn = document.getElementById('back-btn');
 
-CREATE TABLE Quizzes (
-    quiz_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title VARCHAR(150) NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
+// Function to render the list of courses
+function renderCourses() {
+    coursesList.innerHTML = '';
+    courses.forEach(course => {
+        const li = document.createElement('li');
+        li.textContent = course.title;
+        li.addEventListener('click', () => showCourseDetails(course));
+        coursesList.appendChild(li);
+    });
+}
 
-CREATE TABLE Questions (
-    question_id INT AUTO_INCREMENT PRIMARY KEY,
-    quiz_id INT NOT NULL,
-    question_text TEXT NOT NULL,
-    option_a VARCHAR(255),
-    option_b VARCHAR(255),
-    option_c VARCHAR(255),
-    option_d VARCHAR(255),
-    correct_option ENUM('A','B','C','D') NOT NULL,
-    FOREIGN KEY (quiz_id) REFERENCES Quizzes(quiz_id) ON DELETE CASCADE
-);
+// Function to show course details
+function showCourseDetails(course) {
+    courseTitle.textContent = course.title;
+    courseDescription.textContent = course.description;
+    courseInstructor.textContent = course.instructor;
+    coursePrice.textContent = course.price.toFixed(2);
 
-CREATE TABLE QuizAttempts (
-    attempt_id INT AUTO_INCREMENT PRIMARY KEY,
-    quiz_id INT NOT NULL,
-    student_id INT NOT NULL,
-    score DECIMAL(5,2),
-    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (quiz_id) REFERENCES Quizzes(quiz_id) ON DELETE CASCADE,
-    FOREIGN KEY (student_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
+    coursesSection.classList.add('hidden');
+    courseDetailsSection.classList.remove('hidden');
+}
 
-CREATE TABLE Payments (
-    payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    course_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('pending','completed','failed') DEFAULT 'pending',
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
+// Back button event
+backBtn.addEventListener('click', () => {
+    courseDetailsSection.classList.add('hidden');
+    coursesSection.classList.remove('hidden');
+});
 
-INSERT INTO Users (full_name, email, password_hash, role) VALUES
-('Alice Johnson', 'alice@example.com', 'hash123', 'student'),
-('Bob Smith', 'bob@example.com', 'hash456', 'student'),
-('Dr. Emily Brown', 'emily@example.com', 'hash789', 'instructor'),
-('Admin User', 'admin@example.com', 'hash000', 'admin');
+// Initialize page
+renderCourses();
+* {
+  box-sizing: border-box;
+}
 
-INSERT INTO Courses (title, description, instructor_id, price) VALUES
-('Introduction to Python', 'Learn Python basics including syntax, data types, and control structures.', 3, 49.99),
-('Web Development with HTML & CSS', 'Build responsive websites using HTML and CSS.', 3, 39.99);
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: #f9f9f9;
+  color: #333;
+}
 
-INSERT INTO Enrollments (user_id, course_id, status) VALUES
-(1, 1, 'active'),
-(2, 1, 'active'),
-(1, 2, 'active');
+header {
+  background-color: #007bff;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
 
-INSERT INTO Modules (course_id, title, content, position) VALUES
-(1, 'Python Basics', 'Introduction to Python, variables, and data types.', 1),
-(1, 'Control Structures', 'If-else statements, loops, and logical operators.', 2),
-(2, 'HTML Fundamentals', 'Learn HTML tags, structure, and attributes.', 1),
-(2, 'CSS Styling', 'Introduction to CSS selectors and properties.', 2);
+main {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
 
-INSERT INTO Assignments (course_id, title, description, due_date) VALUES
-(1, 'Python Assignment 1', 'Write a program to calculate factorial of a number.', '2025-09-20'),
-(2, 'HTML & CSS Project', 'Create a simple portfolio website.', '2025-09-25');
+h1, h2 {
+  margin-bottom: 1rem;
+}
 
-INSERT INTO Submissions (assignment_id, student_id, grade, feedback) VALUES
-(1, 1, 95.5, 'Great work!'),
-(1, 2, 88.0, 'Good job, but missing edge cases.');
+#courses-list {
+  list-style: none;
+  padding: 0;
+}
 
-INSERT INTO Quizzes (course_id, title) VALUES
-(1, 'Python Basics Quiz'),
-(2, 'HTML Fundamentals Quiz');
+#courses-list li {
+  background-color: white;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease;
+}
 
-INSERT INTO Questions (quiz_id, question_text, option_a, option_b, option_c, option_d, correct_option) VALUES
-(1, 'Which of the following is a valid variable name in Python?', '2var', '_name', 'class', 'for', 'B'),
-(1, 'What is the output of print(2**3)?', '6', '8', '9', '16', 'B'),
-(2, 'Which HTML tag is used for inserting a line break?', '<br>', '<hr>', '<p>', '<lb>', 'A');
+#courses-list li:hover {
+  background-color: #e9f0ff;
+}
 
-INSERT INTO QuizAttempts (quiz_id, student_id, score) VALUES
-(1, 1, 90.0),
-(1, 2, 85.0);
+#course-details {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
 
-INSERT INTO Payments (user_id, course_id, amount, status) VALUES
-(1, 1, 49.99, 'completed'),
-(1, 2, 39.99, 'completed'),
-(2, 1, 49.99, 'completed');
-SHOW TABLES;
+.hidden {
+  display: none;
+}
 
-DESCRIBE Users;
-DESCRIBE Courses;
-DESCRIBE Enrollments;
-DESCRIBE Modules;
-DESCRIBE Assignments;
-DESCRIBE Submissions;
-DESCRIBE Quizzes;
-DESCRIBE Questions;
-DESCRIBE QuizAttempts;
-DESCRIBE Payments;
+#back-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
 
-SELECT * FROM Users;
-SELECT * FROM Courses;
-SELECT * FROM Enrollments;
-SELECT * FROM Modules;
-SELECT * FROM Assignments;
-SELECT * FROM Submissions;
-SELECT * FROM Quizzes;
-SELECT * FROM Questions;
-SELECT * FROM QuizAttempts;
-SELECT * FROM Payments;
-CREATE TABLE Users (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role ENUM('student', 'instructor', 'admin') DEFAULT 'student',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE Courses (
-    course_id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(150) NOT NULL,
-    description TEXT,
-    instructor_id INT NOT NULL,
-    price DECIMAL(10,2) DEFAULT 0.00,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (instructor_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Enrollments (
-    enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    course_id INT NOT NULL,
-    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('active', 'completed', 'dropped') DEFAULT 'active',
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Modules (
-    module_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title VARCHAR(150) NOT NULL,
-    content TEXT,
-    position INT NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Assignments (
-    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title VARCHAR(150) NOT NULL,
-    description TEXT,
-    due_date DATE,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Submissions (
-    submission_id INT AUTO_INCREMENT PRIMARY KEY,
-    assignment_id INT NOT NULL,
-    student_id INT NOT NULL,
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    grade DECIMAL(5,2),
-    feedback TEXT,
-    FOREIGN KEY (assignment_id) REFERENCES Assignments(assignment_id) ON DELETE CASCADE,
-    FOREIGN KEY (student_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Quizzes (
-    quiz_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title VARCHAR(150) NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Questions (
-    question_id INT AUTO_INCREMENT PRIMARY KEY,
-    quiz_id INT NOT NULL,
-    question_text TEXT NOT NULL,
-    option_a VARCHAR(255),
-    option_b VARCHAR(255),
-    option_c VARCHAR(255),
-    option_d VARCHAR(255),
-    correct_option ENUM('A','B','C','D') NOT NULL,
-    FOREIGN KEY (quiz_id) REFERENCES Quizzes(quiz_id) ON DELETE CASCADE
-);
-
-CREATE TABLE QuizAttempts (
-    attempt_id INT AUTO_INCREMENT PRIMARY KEY,
-    quiz_id INT NOT NULL,
-    student_id INT NOT NULL,
-    score DECIMAL(5,2),
-    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (quiz_id) REFERENCES Quizzes(quiz_id) ON DELETE CASCADE,
-    FOREIGN KEY (student_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Payments (
-    payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    course_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('pending','completed','failed') DEFAULT 'pending',
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-INSERT INTO Users (full_name, email, password_hash, role) VALUES
-('Alice Johnson', 'alice@example.com', 'hash123', 'student'),
-('Bob Smith', 'bob@example.com', 'hash456', 'student'),
-('Dr. Emily Brown', 'emily@example.com', 'hash789', 'instructor'),
-('Admin User', 'admin@example.com', 'hash000', 'admin');
-
-INSERT INTO Courses (title, description, instructor_id, price) VALUES
-('Introduction to Python', 'Learn Python basics including syntax, data types, and control structures.', 3, 49.99),
-('Web Development with HTML & CSS', 'Build responsive websites using HTML and CSS.', 3, 39.99);
-
-INSERT INTO Enrollments (user_id, course_id, status) VALUES
-(1, 1, 'active'),
-(2, 1, 'active'),
-(1, 2, 'active');
-
-INSERT INTO Modules (course_id, title, content, position) VALUES
-(1, 'Python Basics', 'Introduction to Python, variables, and data types.', 1),
-(1, 'Control Structures', 'If-else statements, loops, and logical operators.', 2),
-(2, 'HTML Fundamentals', 'Learn HTML tags, structure, and attributes.', 1),
-(2, 'CSS Styling', 'Introduction to CSS selectors and properties.', 2);
-
-INSERT INTO Assignments (course_id, title, description, due_date) VALUES
-(1, 'Python Assignment 1', 'Write a program to calculate factorial of a number.', '2025-09-20'),
-(2, 'HTML & CSS Project', 'Create a simple portfolio website.', '2025-09-25');
-
-INSERT INTO Submissions (assignment_id, student_id, grade, feedback) VALUES
-(1, 1, 95.5, 'Great work!'),
-(1, 2, 88.0, 'Good job, but missing edge cases.');
-
-INSERT INTO Quizzes (course_id, title) VALUES
-(1, 'Python Basics Quiz'),
-(2, 'HTML Fundamentals Quiz');
-
-INSERT INTO Questions (quiz_id, question_text, option_a, option_b, option_c, option_d, correct_option) VALUES
-(1, 'Which of the following is a valid variable name in Python?', '2var', '_name', 'class', 'for', 'B'),
-(1, 'What is the output of print(2**3)?', '6', '8', '9', '16', 'B'),
-(2, 'Which HTML tag is used for inserting a line break?', '<br>', '<hr>', '<p>', '<lb>', 'A');
-
-INSERT INTO QuizAttempts (quiz_id, student_id, score) VALUES
-(1, 1, 90.0),
-(1, 2, 85.0);
-
-INSERT INTO Payments (user_id, course_id, amount, status) VALUES
-(1, 1, 49.99, 'completed'),
-(1, 2, 39.99, 'completed'),
-(2, 1, 49.99, 'completed');
-SHOW TABLES;
-
-DESCRIBE Users;
-DESCRIBE Courses;
-DESCRIBE Enrollments;
-DESCRIBE Modules;
-DESCRIBE Assignments;
-DESCRIBE Submissions;
-DESCRIBE Quizzes;
-DESCRIBE Questions;
-DESCRIBE QuizAttempts;
-DESCRIBE Payments;
-
-SELECT * FROM Users;
-SELECT * FROM Courses;
-SELECT * FROM Enrollments;
-SELECT * FROM Modules;
-SELECT * FROM Assignments;
-SELECT * FROM Submissions;
-SELECT * FROM Quizzes;
-SELECT * FROM Questions;
-SELECT * FROM QuizAttempts;
-SELECT * FROM Payments;
-CREATE TABLE Users (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role ENUM('student', 'instructor', 'admin') DEFAULT 'student',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE Courses (
-    course_id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(150) NOT NULL,
-    description TEXT,
-    instructor_id INT NOT NULL,
-    price DECIMAL(10,2) DEFAULT 0.00,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (instructor_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Enrollments (
-    enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    course_id INT NOT NULL,
-    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('active', 'completed', 'dropped') DEFAULT 'active',
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Modules (
-    module_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title VARCHAR(150) NOT NULL,
-    content TEXT,
-    position INT NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Assignments (
-    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title VARCHAR(150) NOT NULL,
-    description TEXT,
-    due_date DATE,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Submissions (
-    submission_id INT AUTO_INCREMENT PRIMARY KEY,
-    assignment_id INT NOT NULL,
-    student_id INT NOT NULL,
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    grade DECIMAL(5,2),
-    feedback TEXT,
-    FOREIGN KEY (assignment_id) REFERENCES Assignments(assignment_id) ON DELETE CASCADE,
-    FOREIGN KEY (student_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Quizzes (
-    quiz_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_id INT NOT NULL,
-    title VARCHAR(150) NOT NULL,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Questions (
-    question_id INT AUTO_INCREMENT PRIMARY KEY,
-    quiz_id INT NOT NULL,
-    question_text TEXT NOT NULL,
-    option_a VARCHAR(255),
-    option_b VARCHAR(255),
-    option_c VARCHAR(255),
-    option_d VARCHAR(255),
-    correct_option ENUM('A','B','C','D') NOT NULL,
-    FOREIGN KEY (quiz_id) REFERENCES Quizzes(quiz_id) ON DELETE CASCADE
-);
-
-CREATE TABLE QuizAttempts (
-    attempt_id INT AUTO_INCREMENT PRIMARY KEY,
-    quiz_id INT NOT NULL,
-    student_id INT NOT NULL,
-    score DECIMAL(5,2),
-    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (quiz_id) REFERENCES Quizzes(quiz_id) ON DELETE CASCADE,
-    FOREIGN KEY (student_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Payments (
-    payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    course_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('pending','completed','failed') DEFAULT 'pending',
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
-);
-
-INSERT INTO Users (full_name, email, password_hash, role) VALUES
-('Alice Johnson', 'alice@example.com', 'hash123', 'student'),
-('Bob Smith', 'bob@example.com', 'hash456', 'student'),
-('Dr. Emily Brown', 'emily@example.com', 'hash789', 'instructor'),
-('Admin User', 'admin@example.com', 'hash000', 'admin');
-
-INSERT INTO Courses (title, description, instructor_id, price) VALUES
-('Introduction to Python', 'Learn Python basics including syntax, data types, and control structures.', 3, 49.99),
-('Web Development with HTML & CSS', 'Build responsive websites using HTML and CSS.', 3, 39.99);
-
-INSERT INTO Enrollments (user_id, course_id, status) VALUES
-(1, 1, 'active'),
-(2, 1, 'active'),
-(1, 2, 'active');
-
-INSERT INTO Modules (course_id, title, content, position) VALUES
-(1, 'Python Basics', 'Introduction to Python, variables, and data types.', 1),
-(1, 'Control Structures', 'If-else statements, loops, and logical operators.', 2),
-(2, 'HTML Fundamentals', 'Learn HTML tags, structure, and attributes.', 1),
-(2, 'CSS Styling', 'Introduction to CSS selectors and properties.', 2);
-
-INSERT INTO Assignments (course_id, title, description, due_date) VALUES
-(1, 'Python Assignment 1', 'Write a program to calculate factorial of a number.', '2025-09-20'),
-(2, 'HTML & CSS Project', 'Create a simple portfolio website.', '2025-09-25');
-
-INSERT INTO Submissions (assignment_id, student_id, grade, feedback) VALUES
-(1, 1, 95.5, 'Great work!'),
-(1, 2, 88.0, 'Good job, but missing edge cases.');
-
-INSERT INTO Quizzes (course_id, title) VALUES
-(1, 'Python Basics Quiz'),
-(2, 'HTML Fundamentals Quiz');
-
-INSERT INTO Questions (quiz_id, question_text, option_a, option_b, option_c, option_d, correct_option) VALUES
-(1, 'Which of the following is a valid variable name in Python?', '2var', '_name', 'class', 'for', 'B'),
-(1, 'What is the output of print(2**3)?', '6', '8', '9', '16', 'B'),
-(2, 'Which HTML tag is used for inserting a line break?', '<br>', '<hr>', '<p>', '<lb>', 'A');
-
-INSERT INTO QuizAttempts (quiz_id, student_id, score) VALUES
-(1, 1, 90.0),
-(1, 2, 85.0);
-
-INSERT INTO Payments (user_id, course_id, amount, status) VALUES
-(1, 1, 49.99, 'completed'),
-(1, 2, 39.99, 'completed'),
-(2, 1, 49.99, 'completed');
-SHOW TABLES;
-
-DESCRIBE Users;
-DESCRIBE Courses;
-DESCRIBE Enrollments;
-DESCRIBE Modules;
-DESCRIBE Assignments;
-DESCRIBE Submissions;
-DESCRIBE Quizzes;
-DESCRIBE Questions;
-DESCRIBE QuizAttempts;
-DESCRIBE Payments;
-
-SELECT * FROM Users;
-SELECT * FROM Courses;
-SELECT * FROM Enrollments;
-SELECT * FROM Modules;
-SELECT * FROM Assignments;
-SELECT * FROM Submissions;
-SELECT * FROM Quizzes;
-SELECT * FROM Questions;
-SELECT * FROM QuizAttempts;
-SELECT * FROM Payments;
+#back-btn:hover {
+  background-color: #0056b3;
+}
